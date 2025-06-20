@@ -19,6 +19,19 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-init:
+    image: postgres:15-alpine
+    container_name: postgres-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./scripts/init-db.sh:/init-db.sh
+    command: sh /init-db.sh
+    restart: "no"
+
   redis:
     restart: 'always'
     image: redis:7-alpine
@@ -32,6 +45,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   minio:
     image: quay.io/minio/minio
     container_name: minio
@@ -45,6 +59,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     restart: always
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     hostname: zookeeper
