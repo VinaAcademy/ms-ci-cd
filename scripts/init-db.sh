@@ -26,7 +26,6 @@ create_database_if_not_exists() {
 }
 
 # Create all required databases
-create_database_if_not_exists "vinaacademy_auth"
 create_database_if_not_exists "vinaacademy_email"
 create_database_if_not_exists "vinaacademy_notification"
 create_database_if_not_exists "vinaacademy_payment"
