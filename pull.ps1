@@ -7,36 +7,36 @@ $orgName = "vinaacademy"
 $tokenFile = "$HOME\.github_token.txt"
 $perPage = 100
 
-# ===== Đăng xuất nếu có tham số --Logout =====
+# ===== Dang xuat neu co tham so --Logout =====
 if ($Logout) {
     if (Test-Path $tokenFile) {
         Remove-Item $tokenFile
-        Write-Host "🚪 Đã xóa token và đăng xuất thành công."
+        Write-Host "Da xoa token va dang xuat thanh cong."
     } else {
-        Write-Host "⚠️ Không có token để xóa."
+        Write-Host "Khong co token de xoa."
     }
     return
 }
 
-# ===== Lấy token (có lưu) =====
+# ===== Lay token (co luu) =====
 function Get-GitHubToken {
     if (Test-Path $tokenFile) {
         return Get-Content $tokenFile -Raw
     } else {
-        Write-Host "🔐 Chưa có token. Đang mở trình duyệt để tạo..."
+        Write-Host "Chua co token. Dang mo trinh duyet de tao..."
         Start-Process "https://github.com/settings/tokens"
-        $newToken = Read-Host "👉 Nhập GitHub Token của bạn (chỉ cần quyền đọc repo)"
+        $newToken = Read-Host "Nhap GitHub Token cua ban (chi can quyen doc repo)"
         Set-Content -Path $tokenFile -Value $newToken
-        Write-Host "💾 Token đã lưu tại $tokenFile"
+        Write-Host "Token da luu tai $tokenFile"
         return $newToken
     }
 }
 
-# Lặp cho đến khi token đúng
+# Lap cho den khi token dung
 do {
     $token = Get-GitHubToken
 
-    # Gọi thử API 1 lần để xác thực token
+    # Goi thu API 1 lan de xac thuc token
     $url = "https://api.github.com/orgs/$orgName/repos?per_page=1&page=1"
     $headers = @{
         Authorization = "token $token"
@@ -47,19 +47,19 @@ do {
         $test = Invoke-RestMethod -Uri $url -Headers $headers -Method Get -ErrorAction Stop
         $tokenValid = $true
     } catch {
-        Write-Host "❌ Token không hợp lệ hoặc hết hạn."
+        Write-Host "Token khong hop le hoac het han."
         Remove-Item $tokenFile -Force
         $tokenValid = $false
     }
 } while (-not $tokenValid)
 
-# ===== Chuẩn hóa đường dẫn =====
-$destinationPath = Resolve-Path -Path $Path
-if (!(Test-Path -Path $destinationPath)) {
-    New-Item -ItemType Directory -Path $destinationPath | Out-Null
+# ===== Chuan hoa duong dan =====
+if (!(Test-Path -Path $Path)) {
+    New-Item -ItemType Directory -Path $Path -Force | Out-Null
 }
+$destinationPath = Resolve-Path -Path $Path
 
-# ===== Lấy toàn bộ repos =====
+# ===== Lay toan bo repos =====
 $allRepos = @()
 $page = 1
 $maxRetries = 3
@@ -86,7 +86,7 @@ do {
     $page++
 } while ($response.Count -eq $perPage)
 
-# ===== Clone hoặc Pull theo default_branch =====
+# ===== Clone hoac Pull theo default_branch =====
 foreach ($repo in $allRepos) {
     $repoName = $repo.name
     $cloneUrl = $repo.clone_url
@@ -98,30 +98,30 @@ foreach ($repo in $allRepos) {
         Push-Location $localRepoPath
         git fetch origin
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Failed to fetch from origin in $repoName."
+            Write-Host "Failed to fetch from origin in $repoName."
             Pop-Location
             return
         }
 
         git checkout $defaultBranch
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Failed to checkout branch $defaultBranch in $repoName."
+            Write-Host "Failed to checkout branch $defaultBranch in $repoName."
             Pop-Location
             return
         }
 
         git pull origin $defaultBranch
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Failed to pull $defaultBranch from origin in $repoName."
+            Write-Host "Failed to pull $defaultBranch from origin in $repoName."
             Pop-Location
             return
         }
 
         Pop-Location
     } else {
-        Write-Host "📥 Cloning $repoName ($defaultBranch)..."
+        Write-Host "Cloning $repoName ($defaultBranch)..."
         git clone --branch $defaultBranch $cloneUrl $localRepoPath
     }
 }
 
-Write-Host "✅ Hoàn tất pull/clone toàn bộ repo vào '$destinationPath'."
+Write-Host "Hoan tat pull/clone toan bo repo vao '$destinationPath'."
