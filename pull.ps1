@@ -80,8 +80,26 @@ foreach ($repo in $allRepos) {
         Write-Host "🔄 Pulling $repoName ($defaultBranch)..."
         Push-Location $localRepoPath
         git fetch origin
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Failed to fetch from origin in $repoName."
+            Pop-Location
+            return
+        }
+
         git checkout $defaultBranch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Failed to checkout branch $defaultBranch in $repoName."
+            Pop-Location
+            return
+        }
+
         git pull origin $defaultBranch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Failed to pull $defaultBranch from origin in $repoName."
+            Pop-Location
+            return
+        }
+
         Pop-Location
     } else {
         Write-Host "📥 Cloning $repoName ($defaultBranch)..."
