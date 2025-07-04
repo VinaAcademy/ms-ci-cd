@@ -62,9 +62,26 @@ if (!(Test-Path -Path $destinationPath)) {
 # ===== Lấy toàn bộ repos =====
 $allRepos = @()
 $page = 1
+$maxRetries = 3
 do {
     $url = "https://api.github.com/orgs/$orgName/repos?per_page=$perPage&page=$page"
-    $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
+    $retryCount = 0
+    $success = $false
+    while (-not $success -and $retryCount -lt $maxRetries) {
+        try {
+            $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
+            $success = $true
+        } catch {
+            $retryCount++
+            if ($retryCount -ge $maxRetries) {
+                Write-Host "Failed to fetch repositories from GitHub API after $maxRetries attempts. Error: $($_.Exception.Message)" -ForegroundColor Red
+                exit 1
+            } else {
+                Write-Host "Error fetching repositories (attempt $retryCount of $maxRetries). Retrying..." -ForegroundColor Yellow
+                Start-Sleep -Seconds 2
+            }
+        }
+    }
     $allRepos += $response
     $page++
 } while ($response.Count -eq $perPage)
