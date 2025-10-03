@@ -94,27 +94,31 @@ foreach ($repo in $allRepos) {
     $localRepoPath = Join-Path $destinationPath $repoName
 
     if (Test-Path -Path $localRepoPath) {
-        Write-Host "🔄 Pulling $repoName ($defaultBranch)..."
+        Write-Host "Pulling $repoName ($defaultBranch)..."
         Push-Location $localRepoPath
+
         git fetch origin
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "Failed to fetch from origin in $repoName."
+            Write-Host "Failed to fetch from origin in $repoName." -ForegroundColor Red
             Pop-Location
-            return
+            continue
         }
 
-        git checkout $defaultBranch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Failed to checkout branch $defaultBranch in $repoName."
-            Pop-Location
-            return
-        }
+        # Luu branch hien tai
+        $currentBranch = git rev-parse --abbrev-ref HEAD
 
-        git pull origin $defaultBranch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Failed to pull $defaultBranch from origin in $repoName."
-            Pop-Location
-            return
+        git checkout $defaultBranch | Out-Null
+        git pull origin $defaultBranch | Out-Null
+
+        # Quay lai branch ban dau
+        git checkout $currentBranch | Out-Null
+
+        # Kiem tra xem branch hien tai da merge base voi default chua
+        git merge-base --is-ancestor origin/$defaultBranch $currentBranch
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Branch '$currentBranch' da cap nhat day du tu '$defaultBranch'." -ForegroundColor Green
+        } else {
+            Write-Host "Branch '$currentBranch' CHUA cap nhat day du tu '$defaultBranch'." -ForegroundColor Yellow
         }
 
         Pop-Location
@@ -123,5 +127,6 @@ foreach ($repo in $allRepos) {
         git clone --branch $defaultBranch $cloneUrl $localRepoPath
     }
 }
+
 
 Write-Host "Hoan tat pull/clone toan bo repo vao '$destinationPath'."

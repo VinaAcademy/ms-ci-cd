@@ -46,7 +46,6 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
-    restart: always
   kafka:
     image: apache/kafka:3.9.1
     container_name: kafka
@@ -72,52 +71,59 @@ services:
       timeout: 5s
       retries: 5
 
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
+  # mongodb:
+  #   image: mongo:7
+  #   container_name: mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: password
+  #     MONGO_INITDB_DATABASE: vinaacademy
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   healthcheck:
+  #     test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  eureka-server:
     restart: always
+    image: lochuung/eureka-server:1.0.0
+    container_name: eureka-server
     ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: vinaacademy
-    volumes:
-      - mongodb_data:/data/db
-    healthcheck:
-      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "8761:8761"
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
-    container_name: elasticsearch
-    environment:
-      - xpack.security.enabled=false
-      - "discovery.type=single-node"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-    networks:
-      - elk
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+  #   container_name: elasticsearch
+  #   environment:
+  #     - xpack.security.enabled=false
+  #     - "discovery.type=single-node"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - es_data:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "9200:9200"
+  #   networks:
+  #     - elk
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.4
-    container_name: kibana
-    depends_on:
-      - elasticsearch
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    networks:
-      - elk
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.13.4
+  #   container_name: kibana
+  #   depends_on:
+  #     - elasticsearch
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   networks:
+  #     - elk
 
 networks:
   elk:
