@@ -1,0 +1,113 @@
+# Gateway Security Configuration
+gateway:
+  security:
+    rate-limit:
+      enabled: true
+      max-requests-per-minute: 200
+      redis-key-prefix: "rate_limit:"
+
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - name: DedupeResponseHeader
+              args:
+                strategy: RETAIN_FIRST
+                name: Access-Control-Allow-Origin Access-Control-Allow-Credentials
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenish-rate: 10
+                redis-rate-limiter.burst-capacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+          globalcors:
+            corsConfigurations:
+              '[/**]':
+                allowedOriginPatterns: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+          routes:
+            # WebSocket route for STOMP connections (SockJS enabled)
+            - id: chat-websocket
+              uri: lb:ws://CHAT-SERVICE
+              predicates:
+                - Path=/ws/chat/**
+              filters:
+                - name: PreserveHostHeader
+                - RemoveRequestHeader=Sec-WebSocket-Protocol
+
+            # Chat REST API routes
+            - id: chat-api
+              uri: lb://CHAT-SERVICE
+              predicates:
+                - Path=/api/v1/conversations/**, /api/v1/messages/**
+
+
+            - id: notification-websocket
+              uri: lb:ws://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/ws/notification/**
+              filters:
+                - name: PreserveHostHeader
+                - RemoveRequestHeader=Sec-WebSocket-Protocol
+
+            - id: notification-service
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/api/v1/notifications/**
+
+            # 💡 Cấu hình fallback cho các route chưa tách khỏi monolith
+            - id: platform-fallback
+              uri: lb://VINAACADEMY-PLATFORM
+              predicates:
+                - Path=/api/v1/**
+
+          discovery:
+            locator:
+              lower-case-service-id: true
+              enabled: true
+  main:
+    web-application-type: reactive
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+    registry-fetch-interval-seconds: 5
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    vn.huuloc.apigateway: DEBUG
+

@@ -1,8 +1,54 @@
 version: '3.8'
 
+networks:
+  vinaacademy-network:
+    driver: bridge
+    name: vinaacademy-network
+  elk:
+    driver: bridge
+
 services:
+  eureka-server:
+    restart: unless-stopped
+    image: lochuung/eureka-server:1.0.0
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - vinaacademy-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api-gateway:
+    restart: unless-stopped
+    image: lochuung/api-gateway:latest
+    container_name: api-gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - ./app-config/dev/api-gateway-dev.yml:/config/application.yml:ro
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/config/
+      - SPRING_PROFILES_ACTIVE=dev
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
   postgres:
-    restart: 'always'
+    restart: unless-stopped
     image: postgres:15-alpine
     container_name: postgres
     environment:
@@ -11,6 +57,8 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    networks:
+      - vinaacademy-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -19,13 +67,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
-    restart: 'always'
+    restart: unless-stopped
     image: redis:7-alpine
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - vinaacademy-network
     volumes:
       - redis_data:/data
     healthcheck:
@@ -33,31 +84,42 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
   minio:
+    restart: unless-stopped
     image: quay.io/minio/minio
     container_name: minio
     ports:
       - "9000:9000"   # API
       - "9001:9001"   # Web UI
+    networks:
+      - vinaacademy-network
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: admin123456
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password123}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
-    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   kafka:
+    restart: unless-stopped
     image: apache/kafka:3.9.1
     container_name: kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -66,66 +128,75 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     healthcheck:
       test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: vinaacademy
-    volumes:
-      - mongodb_data:/data/db
-    healthcheck:
-      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # mongodb:
+  #   image: mongo:7
+  #   container_name: mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: password
+  #     MONGO_INITDB_DATABASE: vinaacademy
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   healthcheck:
+  #     test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
-    container_name: elasticsearch
-    environment:
-      - xpack.security.enabled=false
-      - "discovery.type=single-node"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-    networks:
-      - elk
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+  #   container_name: elasticsearch
+  #   environment:
+  #     - xpack.security.enabled=false
+  #     - "discovery.type=single-node"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - es_data:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "9200:9200"
+  #   networks:
+  #     - elk
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.4
-    container_name: kibana
-    depends_on:
-      - elasticsearch
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    networks:
-      - elk
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.13.4
+  #   container_name: kibana
+  #   depends_on:
+  #     - elasticsearch
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   networks:
+  #     - elk
 
-networks:
-  elk:
-    driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
   minio_data:
+    driver: local
+  kafka_data:
+    driver: local
   mongodb_data:
+    driver: local
   es_data:
+    driver: local
