@@ -1,1 +1,28 @@
 /.idea/
+keys
+# Environment variables - NEVER commit these files!
+.env
+.env.local
+.env.*.local
+
+# Sensitive data
+*.pem
+*.key
+*.cert
+secrets/
+
+# Docker volumes data
+postgres_data/
+redis_data/
+minio_data/
+kafka_data/
+mongodb_data/
+es_data/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

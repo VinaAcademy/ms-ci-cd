@@ -1,0 +1,83 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:notification-service}
+
+  data:
+    redis:
+      enabled: ${SPRING_DATA_REDIS_ENABLED:true}
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  datasource:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/vinaacademy_email}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      auto-commit: ${SPRING_DATASOURCE_HIKARI_AUTO_COMMIT:true}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:20}
+
+  jpa:
+    generate-ddl: ${SPRING_JPA_GENERATE_DDL:true}
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:notification-group}
+    producer:
+      retries: ${SPRING_KAFKA_PRODUCER_RETRIES:3}
+notifications:
+  email:
+    enabled: ${NOTIFICATIONS_EMAIL_ENABLED:false}
+
+mail:
+  dailyLimit: ${MAIL_DAILY_LIMIT:450}
+  useRandom: ${MAIL_USE_RANDOM:false}
+  onlyGmail: ${MAIL_ONLY_GMAIL:true}
+  activeProviders:
+    - ${MAIL_ACTIVE_PROVIDER:gmail}
+  accounts:
+    - provider: ${MAIL_PROVIDER:gmail}
+      host: ${MAIL_HOST:smtp.gmail.com}
+      port: ${MAIL_PORT:587}
+      username: ${GMAIL_USERNAME}
+      password: ${GMAIL_PASSWORD}
+      properties:
+        mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+        mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-server:8761/eureka/}
+  instance:
+    prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:true}
+
+application:
+  hmac:
+    secret: ${APPLICATION_HMAC_SECRET:super-secret-key-for-hmac}
+
+security:
+  eureka:
+    enabled: ${SECURITY_EUREKA_ENABLED:true}
+  oauth2:
+    provider:
+      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://vinaacademy-platform:8080/oauth2/token}
+      service-name: ${SECURITY_EUREKA_SERVICE_NAME:vinaacademy-platform}
+    grpc-client:
+      scopes: ${SECURITY_OAUTH2_SCOPE_1:api.read}, ${SECURITY_OAUTH2_SCOPE_2:api.write}
+      client-id: ${SECURITY_OAUTH2_GRPC_CLIENT_ID:grpc-client}
+      client-secret: ${SECURITY_OAUTH2_GRPC_CLIENT_SECRET:grpc-secret}
+  grpc:
+    grpc-address: ${SECURITY_JWT_GRPC_ADDRESS:vinaacademy-platform:9090}
+    enable-keep-alive: ${SECURITY_JWT_ENABLE_KEEP_ALIVE:true}
+    keep-alive-time: ${SECURITY_JWT_KEEP_ALIVE_TIME:30}
+    keep-alive-timeout: ${SECURITY_JWT_KEEP_ALIVE_TIMEOUT:5}
+    service-name: vinaacademy-platform

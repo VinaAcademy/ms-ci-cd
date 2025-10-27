@@ -47,6 +47,135 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  vinaacademy-platform:
+    restart: unless-stopped
+    image: lochuung/vinaacademy-platform:latest
+    container_name: vinaacademy-platform
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+      - "9090:9090"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - ./app-config/dev:/config:ro
+      - ./keys:/app/keys:ro
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/config/vinaacademy-platform-dev.yml
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/vinaacademy
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-password123}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
+      - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  notification-service:
+    restart: unless-stopped
+    image: lochuung/notification-service:latest
+    container_name: notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      vinaacademy-platform:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - ./app-config/dev:/config:ro
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/config/notification-service-dev.yml
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/vinaacademy_email
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - SECURITY_JWT_GRPC_ADDRESS=vinaacademy-platform:9090
+      - GMAIL_USERNAME=${GMAIL_USERNAME}
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
+      - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  chat-service:
+    restart: unless-stopped
+    image: lochuung/chat-service:latest
+    container_name: chat-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      vinaacademy-platform:
+        condition: service_healthy
+    ports:
+      - "8083:8080"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - ./app-config/dev:/config:ro
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/config/chat-service-dev.yml
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_URL=postgres:5432
+      - DB_NAME=vinaacademy_chat
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - EUREKA_CLIENT_SERVICE_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SECURITY_JWT_GRPC_ADDRESS=vinaacademy-platform:9090
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
   postgres:
     restart: unless-stopped
     image: postgres:15-alpine
@@ -115,11 +244,12 @@ services:
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL 
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -127,17 +257,36 @@ services:
       KAFKA_NUM_PARTITIONS: 3
     ports:
       - "9092:9092"
+      - "29092:29092"
       - "9093:9093"
     networks:
       - vinaacademy-network
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+  vinaacademy_frontend:
+    restart: unless-stopped
+    image: lochuung/vinaacademy-frontend:latest
+    container_name: vinaacademy_frontend
+    
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+      vinaacademy-platform:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - vinaacademy-network
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api-gateway:8080/api/v1}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-http://localhost:8080/ws}
 
   # mongodb:
   #   image: mongo:7

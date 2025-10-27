@@ -1,0 +1,152 @@
+server:
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: ${SERVER_COMPRESSION_ENABLED:true}
+    mime-types: ${SERVER_COMPRESSION_MIME_TYPES:application/x-mpegURL,text/plain}
+    min-response-size: ${SERVER_COMPRESSION_MIN_RESPONSE_SIZE:1024}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:true}
+
+spring:
+  application:
+    name: VinaAcademy-platform
+  grpc:
+    server:
+      port: ${SPRING_GRPC_SERVER_PORT:9090}
+      reflection:
+        enabled: ${SPRING_GRPC_SERVER_REFLECTION_ENABLED:true}
+
+  datasource:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vinaacademy}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      auto-commit: ${SPRING_DATASOURCE_HIKARI_AUTO_COMMIT:true}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:20}
+
+  data:
+    redis:
+      enabled: ${SPRING_DATA_REDIS_ENABLED:true}
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      default-ttl: ${SPRING_DATA_REDIS_DEFAULT_TTL:3600}
+
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: ${SPRING_JPA_HIBERNATE_DEFAULT_BATCH_FETCH_SIZE:20}
+        jdbc:
+          batch_size: ${SPRING_JPA_HIBERNATE_JDBC_BATCH_SIZE:20}
+          lob:
+            non_contextual_creation: ${SPRING_JPA_HIBERNATE_JDBC_LOB_NON_CONTEXTUAL_CREATION:true}
+        format_sql: ${SPRING_JPA_HIBERNATE_FORMAT_SQL:true}
+        order_updates: ${SPRING_JPA_HIBERNATE_ORDER_UPDATES:true}
+        use_sql_comments: ${SPRING_JPA_HIBERNATE_USE_SQL_COMMENTS:true}
+        order_inserts: ${SPRING_JPA_HIBERNATE_ORDER_INSERTS:true}
+        show_sql: ${SPRING_JPA_HIBERNATE_SHOW_SQL:true}
+    generate-ddl: ${SPRING_JPA_GENERATE_DDL:true}
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
+
+  servlet:
+    multipart:
+      enabled: ${SPRING_SERVLET_MULTIPART_ENABLED:true}
+      maxFileSize: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:1GB}
+      maxRequestSize: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:1GB}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${GOOGLE_REDIRECT_URI:{baseUrl}/oauth2/callback/{registrationId}}
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: ${GOOGLE_AUTH_URI:https://accounts.google.com/o/oauth2/v2/auth}
+            token-uri: ${GOOGLE_TOKEN_URI:https://www.googleapis.com/oauth2/v4/token}
+            user-info-uri: ${GOOGLE_USER_INFO_URI:https://www.googleapis.com/oauth2/v3/userinfo}
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: ${SPRINGDOC_SWAGGER_UI_PATH:/}
+    operations-sorter: ${SPRINGDOC_SWAGGER_UI_OPERATIONS_SORTER:method}
+
+application:
+  jwt:
+    refreshToken:
+      expiration: ${APPLICATION_JWT_REFRESH_EXPIRATION:2592000}
+    accessToken:
+      expiration: ${APPLICATION_JWT_ACCESS_EXPIRATION:86400}
+  hmac:
+    secret: ${APPLICATION_HMAC_SECRET}
+  storage:
+    uploadDir: ${UPLOAD_DIR:/vinaacademy/uploads}
+  video:
+    maxSize: ${APPLICATION_VIDEO_MAX_SIZE:1073741824}
+  url:
+    frontend: ${APPLICATION_URL_FRONTEND:http://localhost:3000}
+    backend: ${APPLICATION_URL_BACKEND:http://localhost:8080}
+    google-auth: ${APPLICATION_URL_GOOGLE_AUTH:http://localhost:3000/login/google}
+  notifications:
+    email:
+      enabled: ${APPLICATION_NOTIFICATIONS_EMAIL_ENABLED:true}
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    com:
+      vinaacademy:
+        platform: ${LOGGING_LEVEL_VINAACADEMY_PLATFORM:TRACE}
+    org:
+      hibernate:
+        type:
+          descriptor:
+            sql:
+              BasicBinder: ${LOGGING_LEVEL_HIBERNATE_BINDER:TRACE}
+          nodeValue: ${LOGGING_LEVEL_HIBERNATE_NODEVALUE:TRACE}
+        SQL: ${LOGGING_LEVEL_HIBERNATE_SQL:DEBUG}
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  url-return: ${VNPAY_URL_RETURN:http://localhost:3000/transaction}
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket: ${MINIO_BUCKET:vinaacademy}
+  region: ${MINIO_REGION:ap-southeast-1}
+  path-style: ${MINIO_PATH_STYLE:true}
+
+mail:
+  dailyLimit: ${MAIL_DAILY_LIMIT:450}
+  useRandom: ${MAIL_USE_RANDOM:false}
+  onlyGmail: ${MAIL_ONLY_GMAIL:true}
+  activeProviders:
+    - gmail
+  accounts:
+    - provider: gmail
+      host: ${MAIL_SMTP_HOST:smtp.gmail.com}
+      port: ${MAIL_SMTP_PORT:587}
+      username: ${MAIL_USERNAME}
+      password: ${MAIL_PASSWORD}
+      properties:
+        mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+        mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
