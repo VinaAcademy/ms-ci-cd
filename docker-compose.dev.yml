@@ -10,7 +10,7 @@ networks:
 services:
   eureka-server:
     restart: unless-stopped
-    image: lochuung/eureka-server:1.0.0
+    image: lochuung/eureka-server:latest
     container_name: eureka-server
     ports:
       - "8761:8761"
