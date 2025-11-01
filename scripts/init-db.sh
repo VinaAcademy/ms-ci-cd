@@ -26,10 +26,8 @@ create_database_if_not_exists() {
 }
 
 # Create all required databases
+create_database_if_not_exists "vinaacademy"
 create_database_if_not_exists "vinaacademy_email"
-create_database_if_not_exists "vinaacademy_notification"
-create_database_if_not_exists "vinaacademy_payment"
-create_database_if_not_exists "vinaacademy_course"
-create_database_if_not_exists "vinaacademy_user"
+create_database_if_not_exists "vinaacademy_chat"
 
 echo "Database initialization completed!"
