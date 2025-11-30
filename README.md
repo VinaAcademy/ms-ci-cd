@@ -247,6 +247,11 @@ scp -r . user@vina-tools:/path/to/vinaacademy/
 
 ### Step 2: Deploy Stack
 
+> **⚠️ IMPORTANT**: Docker Stack does NOT automatically load `.env` files like Docker Compose!
+> You must use one of the methods below.
+
+**Method 1: Using Deploy Script (Recommended)**
+
 ```bash
 # SSH to manager node
 ssh user@vina-tools
@@ -254,7 +259,47 @@ ssh user@vina-tools
 # Navigate to project directory
 cd /path/to/vinaacademy
 
+# Make script executable (Linux/Mac)
+chmod +x deploy.sh
+
+# Run deploy script
+./deploy.sh
+```
+
+For Windows PowerShell:
+```powershell
+# Run deploy script
+.\deploy.ps1 -Action deploy
+```
+
+**Method 2: Manual Export Variables (Linux/Mac)**
+
+```bash
+# Export variables from .env file
+export $(grep -v '^#' .env | grep -v '^$' | xargs)
+
 # Deploy the stack
+docker stack deploy -c docker-stack.yml vinaacademy
+```
+
+**Method 3: Using docker-compose config (Cross-platform)**
+
+```bash
+# Use docker-compose to substitute variables, then deploy
+docker-compose -f docker-stack.yml config | docker stack deploy -c - vinaacademy
+```
+
+**Method 4: Manual Export Variables (Windows PowerShell)**
+
+```powershell
+# Load environment variables
+Get-Content .env | ForEach-Object {
+    if ($_ -match '^([^#][^=]*)=(.*)$') {
+        [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
+    }
+}
+
+# Deploy the stack  
 docker stack deploy -c docker-stack.yml vinaacademy
 ```
 

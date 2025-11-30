@@ -15,8 +15,18 @@ version: '3.8'
 # docker node update --label-add role=tools vina-tools
 # docker node update --label-add role=worker-service vina-microservices
 #
-# Deploy command:
-# docker stack deploy -c docker-stack.yml vinaacademy
+# IMPORTANT: Docker Stack does NOT support .env files automatically!
+# You must export environment variables before deploying:
+#
+# Option 1: Export from .env file (Linux/Mac)
+#   export $(grep -v '^#' .env | xargs) && docker stack deploy -c docker-stack.yml vinaacademy
+#
+# Option 2: Export from .env file (Windows PowerShell)
+#   Get-Content .env | ForEach-Object { if ($_ -match '^([^#][^=]*)=(.*)$') { [Environment]::SetEnvironmentVariable($matches[1], $matches[2]) } }
+#   docker stack deploy -c docker-stack.yml vinaacademy
+#
+# Option 3: Use docker-compose config to substitute variables
+#   docker-compose -f docker-stack.yml config | docker stack deploy -c - vinaacademy
 # =====================================================
 
 networks:
