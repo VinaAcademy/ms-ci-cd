@@ -4,6 +4,7 @@ keys
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Sensitive data
 *.pem
