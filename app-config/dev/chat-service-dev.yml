@@ -7,9 +7,9 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
   instance:
-    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
     prefer-ip-address: true
-    instanceId: ${EUREKA_INSTANCE_ID:${spring.application.name}:${random.value}}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 spring:
   application:
     name: chat-service
