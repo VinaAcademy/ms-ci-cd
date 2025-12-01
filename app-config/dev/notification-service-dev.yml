@@ -56,7 +56,10 @@ mail:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-server:8761/eureka/}
+      defaultZone: http://eureka-server:8761/eureka
+    registry-fetch-interval-seconds: 5
+    healthcheck:
+      enabled: true
   instance:
     prefer-ip-address: false
 
