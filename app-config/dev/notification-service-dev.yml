@@ -58,9 +58,7 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-server:8761/eureka/}
   instance:
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
+    prefer-ip-address: false
 
 application:
   hmac:

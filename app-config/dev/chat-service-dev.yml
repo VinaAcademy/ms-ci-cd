@@ -7,9 +7,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
   instance:
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
+    prefer-ip-address: false
 spring:
   application:
     name: chat-service
