@@ -176,7 +176,9 @@ services:
   api-gateway:
     image: lochuung/api-gateway:latest
     ports:
-      - "8080:8080"
+      - target: 8080
+        published: 8080
+        mode: host
     networks:
       - vinaacademy-network
     configs:
@@ -369,7 +371,9 @@ services:
   vinaacademy-frontend:
     image: lochuung/vinaacademy-frontend:latest
     ports:
-      - "3000:3000"
+      - target: 3000
+        published: 3000
+        mode: host
     networks:
       - vinaacademy-network
     environment:
