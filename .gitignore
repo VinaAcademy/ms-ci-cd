@@ -5,6 +5,8 @@ keys
 .env.local
 .env.*.local
 .env.production
+.env.tools
+.env.services
 
 # Sensitive data
 *.pem

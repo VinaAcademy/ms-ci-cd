@@ -53,15 +53,15 @@ mail:
         mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
         mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
 
-eureka:
   client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka
-    registry-fetch-interval-seconds: 5
-    healthcheck:
-      enabled: true
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
   instance:
-    prefer-ip-address: false
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 application:
   hmac:
