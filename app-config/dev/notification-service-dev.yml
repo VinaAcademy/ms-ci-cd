@@ -17,9 +17,23 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     hikari:
-      auto-commit: ${SPRING_DATASOURCE_HIKARI_AUTO_COMMIT:true}
+      # Pool sizing
       minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
       maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:20}
+      # Connection behavior
+      auto-commit: ${SPRING_DATASOURCE_HIKARI_AUTO_COMMIT:true}
+      # Timeouts (in milliseconds)
+      connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:600000}
+      max-lifetime: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:1800000}
+      # Validation
+      validation-timeout: ${SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT:5000}
+      # Leak detection
+      leak-detection-threshold: ${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION:60000}
+      # Pool name for monitoring
+      pool-name: ${SPRING_DATASOURCE_HIKARI_POOL_NAME:NotificationService-HikariPool}
+      # Keep alive
+      keepalive-time: ${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:300000}
 
   jpa:
     generate-ddl: ${SPRING_JPA_GENERATE_DDL:true}
@@ -53,6 +67,7 @@ mail:
         mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
         mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
 
+eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_CLIENT_SERVICE_DEFAULTZONE:http://localhost:8761/eureka/}

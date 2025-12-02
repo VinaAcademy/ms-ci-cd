@@ -30,9 +30,23 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     hikari:
+      # Pool sizing
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:10}
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:50}
+      # Connection behavior
       auto-commit: ${SPRING_DATASOURCE_HIKARI_AUTO_COMMIT:true}
-      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
-      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:20}
+      # Timeouts (in milliseconds)
+      connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:600000}
+      max-lifetime: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:1800000}
+      # Validation
+      validation-timeout: ${SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT:5000}
+      # Leak detection (set to 0 to disable, or use a value > 2000ms for production monitoring)
+      leak-detection-threshold: ${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION:60000}
+      # Pool name for monitoring/logging
+      pool-name: ${SPRING_DATASOURCE_HIKARI_POOL_NAME:VinaAcademy-HikariPool}
+      # Keep alive (PostgreSQL specific - prevents idle connection drops)
+      keepalive-time: ${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:300000}
 
   data:
     redis:
