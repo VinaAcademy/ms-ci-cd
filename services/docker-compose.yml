@@ -61,7 +61,7 @@ services:
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
       - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
       - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
-      - VNPAY_URL_RETURN=${VNPAY_URL_RETURN:http://${DROPLET_A_IP}:3000/transaction}
+      - VNPAY_URL_RETURN=${VNPAY_URL_RETURN:-http://${DROPLET_A_IP}:3000/transaction}
       - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
