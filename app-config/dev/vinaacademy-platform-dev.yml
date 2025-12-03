@@ -55,6 +55,12 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       default-ttl: ${SPRING_DATA_REDIS_DEFAULT_TTL:3600}
 
+  kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   jpa:
     properties:
       hibernate:

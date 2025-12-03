@@ -98,6 +98,7 @@ services:
       - GMAIL_USERNAME=${GMAIL_USERNAME}
       - GMAIL_PASSWORD=${GMAIL_PASSWORD}
       - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
+      - KAFKA_BOOTSTRAP_SERVERS=${DROPLET_A_IP}:9092
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
