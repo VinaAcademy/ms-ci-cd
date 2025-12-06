@@ -6,6 +6,50 @@ networks:
     name: vinaacademy-network
 
 services:
+  postgres:
+    restart: unless-stopped
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vinaacademy}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ../scripts/ensure-dbs.sh:/docker-entrypoint-initdb.d/02-ensure-dbs.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Sidecar to ensure databases exist on every restart
+  postgres-init:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vinaacademy-network
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USERNAME:-postgres}
+      PGPASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATABASE: ${POSTGRES_DB:-vinaacademy}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-vinaacademy}
+    volumes:
+      - ../scripts/ensure-dbs.sh:/ensure-dbs.sh
+    entrypoint: ["/bin/bash", "/ensure-dbs.sh"]
+    restart: "no"
+
   eureka-server:
     restart: unless-stopped
     image: lochuung/eureka-server:latest
