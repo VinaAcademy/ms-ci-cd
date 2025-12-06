@@ -63,6 +63,8 @@ services:
       - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
       - VNPAY_URL_RETURN=${VNPAY_URL_RETURN:-http://${DROPLET_A_IP}:3000/transaction}
       - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
+      - APPLICATION_URL_FRONTEND=${APPLICATION_URL_FRONTEND:-http://localhost:3000}
+      - APPLICATION_URL_BACKEND=${APPLICATION_URL_BACKEND:-http://localhost:8080}
       - KAFKA_BOOTSTRAP_SERVERS=${DROPLET_A_IP}:9092
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
