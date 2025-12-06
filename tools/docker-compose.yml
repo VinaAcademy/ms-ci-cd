@@ -63,6 +63,7 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
+      - "29092:29092"
     networks:
       - vinaacademy-network
     volumes:
