@@ -76,7 +76,6 @@ eureka:
   instance:
     ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:localhost}
     prefer-ip-address: true
-    non-secure-port: ${EUREKA_INSTANCE_PORT:${%SERVER_PORT:8080}}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
