@@ -2,11 +2,14 @@
 keys
 # Environment variables - NEVER commit these files!
 .env
-.env.local
-.env.*.local
+.env
+.env.*
 .env.production
 .env.tools
 .env.services
+!.env.example
+!.env.example.*
+!.env.*.example
 
 # Sensitive data
 *.pem
