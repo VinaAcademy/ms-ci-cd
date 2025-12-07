@@ -45,8 +45,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/app/src  # Mount source for development
-      - ./alembic.ini:/app/alembic.ini
       - faiss_data:/app/src/data  # Persist FAISS indexes
     networks:
       - ai-network
