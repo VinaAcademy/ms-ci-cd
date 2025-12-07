@@ -19,16 +19,17 @@ This guide provides instructions for deploying the VinaAcademy microservices pla
 
 ### Services Architecture
 
-| Service | Description | Port |
-|---------|-------------|------|
-| eureka-server | Service Discovery | 8761 |
-| api-gateway | API Gateway | 8080 |
-| vinaacademy-platform | Main Platform Service | 8081, 9090 (gRPC) |
-| notification-service | Email/Notification Service | 8082 |
-| chat-service | Real-time Chat Service | 8083 |
-| vinaacademy-frontend | Next.js Frontend | 3000 |
-| redis | Cache & Session Store | 6379 |
-| kafka | Message Broker | 9092, 29092 |
+| Service                | Description                | Port              |
+| ---------------------- | -------------------------- | ----------------- |
+| eureka-server          | Service Discovery          | 8761              |
+| api-gateway            | API Gateway                | 8080              |
+| vinaacademy-platform   | Main Platform Service      | 8081, 9090 (gRPC) |
+| notification-service   | Email/Notification Service | 8082              |
+| chat-service           | Real-time Chat Service     | 8083              |
+| text-to-speech-service | Text-to-Speech Conversion  | 8084              |
+| vinaacademy-frontend   | Next.js Frontend           | 3000              |
+| redis                  | Cache & Session Store      | 6379              |
+| kafka                  | Message Broker             | 9092, 29092       |
 
 ### External Services (Cloud)
 

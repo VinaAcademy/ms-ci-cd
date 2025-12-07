@@ -1,0 +1,66 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:text-to-speech-service}
+
+  # Cache Configuration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-server:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:true}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# Azure Speech Service Configuration
+azure:
+  speech:
+    key: ${AZURE_SPEECH_KEY}
+    region: ${AZURE_SPEECH_REGION:southeastasia}
+    endpoint: ${AZURE_SPEECH_ENDPOINT:https://southeastasia.api.cognitive.microsoft.com/}
+
+# TTS Configuration
+tts:
+  config:
+    default-voice: ${TTS_DEFAULT_VOICE:vi-VN-HoaiMyNeural}
+    default-language: ${TTS_DEFAULT_LANGUAGE:vi-VN}
+    audio-format: ${TTS_AUDIO_FORMAT:audio-16khz-128kbitrate-mono-mp3}
+    max-text-length: ${TTS_MAX_TEXT_LENGTH:5000}
+    cache-enabled: ${TTS_CACHE_ENABLED:true}
+    # F0 Tier Rate Limiting (Azure Free Tier)
+    rate-limit:
+      requests-per-minute: ${TTS_RATE_LIMIT_RPM:18}
+      concurrent-requests: ${TTS_RATE_LIMIT_CONCURRENT:1}
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.vinnacademy.tts: ${LOG_LEVEL_APP:INFO}
+    com.microsoft.cognitiveservices: ${LOG_LEVEL_AZURE:WARN}
+    root: ${LOG_LEVEL_ROOT:INFO}

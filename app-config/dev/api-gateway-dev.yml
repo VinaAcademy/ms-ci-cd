@@ -72,6 +72,12 @@ spring:
               predicates:
                 - Path=/api/v1/notifications/**
 
+            # Text-to-Speech Service routes
+            - id: tts-service
+              uri: lb://TEXT-TO-SPEECH-SERVICE
+              predicates:
+                - Path=/api/v1/tts/**
+
             # 💡 Cấu hình fallback cho các route chưa tách khỏi monolith
             - id: platform-fallback
               uri: lb://VINAACADEMY-PLATFORM
