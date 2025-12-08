@@ -41,6 +41,7 @@ services:
     environment:
       - SPRING_CONFIG_LOCATION=file:/config/api-gateway-dev.yml
       - SPRING_PROFILES_ACTIVE=dev
+      - EUREKA_CLIENT_SERVICE_DEFAULTZONE=http://eureka-server:8761/eureka/
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
@@ -175,6 +176,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 90s
+
+  text-to-speech-service:
+    restart: unless-stopped
+    image: lphn319/text-to-speech-service:latest
+    container_name: text-to-speech-service
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8084:8080"
+    networks:
+      - vinaacademy-network
+    volumes:
+      - ./app-config/dev:/config:ro
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/config/text-to-speech-service-dev.yml
+      - SPRING_PROFILES_ACTIVE=dev
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - AZURE_SPEECH_KEY=${AZURE_SPEECH_KEY}
+      - AZURE_SPEECH_REGION=${AZURE_SPEECH_REGION:-southeastasia}
+      - AZURE_SPEECH_ENDPOINT=${AZURE_SPEECH_ENDPOINT:-https://southeastasia.api.cognitive.microsoft.com/}
+      - TTS_DEFAULT_VOICE=${TTS_DEFAULT_VOICE:-vi-VN-HoaiMyNeural}
+      - TTS_DEFAULT_LANGUAGE=${TTS_DEFAULT_LANGUAGE:-vi-VN}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   postgres:
     restart: unless-stopped
