@@ -35,6 +35,9 @@ spring:
                 redis-rate-limiter.replenish-rate: 10
                 redis-rate-limiter.burst-capacity: 20
                 key-resolver: "#{@ipKeyResolver}"
+            - name: RequestSize
+              args:
+                maxSize: 10MB
           globalcors:
             corsConfigurations:
               '[/**]':
@@ -84,6 +87,9 @@ spring:
                 - Path=/api/v1/ai/quiz/**
               filters:
                 - RewritePath=/api/v1/ai/quiz/?(?<remaining>.*), /api/v1/quiz/${remaining}
+              metadata:
+                connect-timeout: 5000
+                response-timeout: 180s
 
             # 💡 Cấu hình fallback cho các route chưa tách khỏi monolith
             - id: platform-fallback
