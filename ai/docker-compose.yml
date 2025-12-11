@@ -15,6 +15,7 @@ services:
       # Database
       DATABASE_URL: postgresql+asyncpg://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-vinaacademy}
       SYNC_DATABASE_URL: postgresql://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-vinaacademy}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@${DROPLET_A_IP:-redis}:${REDIS_PORT:-6379}/0
 
       # LLM API Keys (set these in .env file)
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
