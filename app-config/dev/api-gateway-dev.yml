@@ -5,6 +5,11 @@ gateway:
       enabled: true
       max-requests-per-minute: 200
       redis-key-prefix: "rate_limit:"
+      exceptions:
+        ips:
+          - "127.0.0.1"
+          - "10.104.0.0/16"
+          - "172.19.0.0/16"
 
 
 spring:
