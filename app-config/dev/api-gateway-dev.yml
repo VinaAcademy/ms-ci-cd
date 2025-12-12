@@ -88,6 +88,15 @@ spring:
               predicates:
                 - Path=/api/v1/tts/**
 
+            # Lang-AI Service routes (direct routing without Eureka)
+            - id: lang-ai-service
+              uri: http://lang-ai-service:8085
+              predicates:
+                - Path=/api/v1/language/**
+              metadata:
+                connect-timeout: 5000
+                response-timeout: 30s
+
             - id: ai-service
               uri: lb://AI-SERVICE
               predicates:

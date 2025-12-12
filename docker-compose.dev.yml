@@ -206,6 +206,30 @@ services:
       retries: 3
       start_period: 60s
 
+  lang-ai-service:
+    restart: unless-stopped
+    build:
+      context: ../lang-ai-service
+      dockerfile: Dockerfile
+    container_name: lang-ai-service
+    ports:
+      - "8085:8085"
+    networks:
+      - vinaacademy-network
+    environment:
+      - SERVER_PORT=8085
+      - SERVER_HOST=0.0.0.0
+      - AZURE_LANGUAGE_ENDPOINT=${AZURE_LANGUAGE_ENDPOINT}
+      - AZURE_LANGUAGE_API_KEY=${AZURE_LANGUAGE_API_KEY}
+      - AZURE_REGION=${AZURE_REGION:-southeastasia}
+      - LOG_LEVEL=info
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   postgres:
     restart: unless-stopped
     image: postgres:15-alpine
