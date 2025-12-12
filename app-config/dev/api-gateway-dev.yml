@@ -10,6 +10,8 @@ gateway:
           - "127.0.0.1"
           - "10.104.0.0/16"
           - "172.19.0.0/16"
+        paths:
+          - "/api/v1/courses/by-slug/**"
 
 
 spring:
