@@ -74,7 +74,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JINA_API_KEY=${JINA_API_KEY}
     networks:
-      - vinaacademy-network
+      - ai-network
 
 networks:
   ai-network:
