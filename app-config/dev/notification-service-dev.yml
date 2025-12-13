@@ -82,6 +82,10 @@ eureka:
 application:
   hmac:
     secret: ${APPLICATION_HMAC_SECRET:super-secret-key-for-hmac}
+  url:
+    frontend: ${APPLICATION_URL_FRONTEND:http://localhost:3000}
+    backend: ${APPLICATION_URL_BACKEND:http://localhost:8080}
+    google-auth: ${APPLICATION_URL_GOOGLE_AUTH:http://localhost:3000/login/google}
 
 security:
   eureka:

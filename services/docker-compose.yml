@@ -105,6 +105,8 @@ services:
       - GMAIL_USERNAME=${GMAIL_USERNAME}
       - GMAIL_PASSWORD=${GMAIL_PASSWORD}
       - APPLICATION_HMAC_SECRET=${APPLICATION_HMAC_SECRET}
+      - APPLICATION_URL_FRONTEND=${APPLICATION_URL_FRONTEND:-http://localhost:3000}
+      - APPLICATION_URL_BACKEND=${APPLICATION_URL_BACKEND:-http://localhost:8080}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
