@@ -56,6 +56,26 @@ services:
       start_period: 40s
       retries: 3
 
+  vector-search-service:
+    restart: unless-stopped
+    image: lochuung/vector-search-service:latest
+    container_name: vector-search-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SERVER_PORT=8086
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-vinaacademy}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${DROPLET_A_IP}:9092
+      - EUREKA_CLIENT_SERVICE_DEFAULTZONE=${EUREKA_SERVER_URL:-http://localhost:8761/eureka/}
+      - EUREKA_INSTANCE_IP_ADDRESS=${INSTANCE_HOST:-localhost}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JINA_API_KEY=${JINA_API_KEY}
+    networks:
+      - vinaacademy-network
+
 networks:
   ai-network:
     driver: bridge
