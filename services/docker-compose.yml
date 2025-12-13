@@ -66,6 +66,7 @@ services:
       - APPLICATION_URL_FRONTEND=${APPLICATION_URL_FRONTEND:-http://localhost:3000}
       - APPLICATION_URL_BACKEND=${APPLICATION_URL_BACKEND:-http://localhost:8080}
       - KAFKA_BOOTSTRAP_SERVERS=${DROPLET_A_IP}:9092
+      - LANGAI_SERVICE_URL=http://lang-ai-service:8085
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
@@ -195,3 +196,25 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  lang-ai-service:
+    restart: unless-stopped
+    image: lphn319/lang-ai-service:latest
+    container_name: lang-ai-service
+    ports:
+      - "8085:8085"
+    networks:
+      - vinaacademy-network
+    environment:
+      - SERVER_PORT=8085
+      - SERVER_HOST=0.0.0.0
+      - AZURE_LANGUAGE_ENDPOINT=${AZURE_LANGUAGE_ENDPOINT}
+      - AZURE_LANGUAGE_API_KEY=${AZURE_LANGUAGE_API_KEY}
+      - AZURE_REGION=${AZURE_REGION:-southeastasia}
+      - LOG_LEVEL=info
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/api/v1/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
