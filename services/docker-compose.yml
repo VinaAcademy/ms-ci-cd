@@ -201,9 +201,6 @@ services:
     restart: unless-stopped
     image: lphn319/lang-ai-service:latest
     container_name: lang-ai-service
-    build:
-      context: ../../lang-ai-service
-      dockerfile: Dockerfile
     ports:
       - "8085:8085"
     networks:
