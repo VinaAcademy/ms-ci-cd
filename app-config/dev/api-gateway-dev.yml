@@ -116,6 +116,13 @@ spring:
               metadata:
                 connect-timeout: 5000
                 response-timeout: 180s
+            - id: vector-search-service
+              uri: lb://VECTOR-SEARCH-SERVICE
+              predicates:
+                - Path=/api/v1/courses/aisearch
+              metadata:
+                connect-timeout: 5000
+                response-timeout: 60s
 
             # 💡 Cấu hình fallback cho các route chưa tách khỏi monolith
             - id: platform-fallback
