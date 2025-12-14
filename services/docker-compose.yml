@@ -42,7 +42,7 @@ services:
     volumes:
       - ../app-config/dev:/config
       - ../keys:/app/keys
-      - ./data/:/vinaacademy/
+      - ../data/:/vinaacademy/
     environment:
       - SPRING_CONFIG_LOCATION=file:/config/vinaacademy-platform-dev.yml
       - SPRING_PROFILES_ACTIVE=dev

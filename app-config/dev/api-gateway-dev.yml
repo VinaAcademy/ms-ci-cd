@@ -51,6 +51,7 @@ spring:
               '[/**]':
                 allowedOriginPatterns:
                   - "http://localhost:[*]"
+                  - "http://127.0.0.1:[*]"
                   - "https://vnacademy.io.vn"
                   - "https://*.vnacademy.io.vn"
                 allowedMethods:
@@ -110,7 +111,7 @@ spring:
             - id: ai-service
               uri: lb://AI-SERVICE
               predicates:
-                - Path=/api/v1/ai/quiz/**
+                - Path=/api/v1/ai/quiz/**,/api/v1/chatbot/**
               filters:
                 - RewritePath=/api/v1/ai/quiz/?(?<remaining>.*), /api/v1/quiz/${remaining}
               metadata:
