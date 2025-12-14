@@ -27,7 +27,7 @@ services:
       OPENAI_MODEL_NAME: gpt-4-turbo
       EMBEDDING_MODEL: text-embedding-3-small
       TEMPERATURE: 0.7
-      MAX_TOKENS: 200000
+      MAX_TOKENS: ${MAX_TOKENS:-1024}
 
       # RAG settings
       RETRIEVAL_TOP_K: 5
