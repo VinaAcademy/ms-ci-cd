@@ -168,6 +168,7 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api-gateway:8080/api/v1}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL}
+      NEXT_PUBLIC_AI_URL: ${NEXT_PUBLIC_AI_URL:-https://api.vnacademy.io.vn/api/v1}
 
   text-to-speech-service:
     restart: unless-stopped
