@@ -40,34 +40,7 @@ This guide provides instructions for deploying the VinaAcademy microservices pla
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Docker Swarm Cluster                          │
-├─────────────────────────────────┬───────────────────────────────────┤
-│     vina-tools (2GB RAM)        │   vina-microservices (8GB RAM)    │
-│        role: tools              │      role: worker-service         │
-├─────────────────────────────────┼───────────────────────────────────┤
-│  ┌─────────┐  ┌─────────┐      │  ┌─────────────┐  ┌─────────────┐ │
-│  │  Redis  │  │  Kafka  │      │  │   Eureka    │  │ API Gateway │ │
-│  │  :6379  │  │  :9092  │      │  │   :8761     │  │   :8080     │ │
-│  └─────────┘  └─────────┘      │  └─────────────┘  └─────────────┘ │
-│                                 │  ┌─────────────┐  ┌─────────────┐ │
-│                                 │  │  Platform   │  │Notification │ │
-│                                 │  │ :8081,:9090 │  │   :8082     │ │
-│                                 │  └─────────────┘  └─────────────┘ │
-│                                 │  ┌─────────────┐  ┌─────────────┐ │
-│                                 │  │    Chat     │  │  Frontend   │ │
-│                                 │  │   :8083     │  │   :3000     │ │
-│                                 │  └─────────────┘  └─────────────┘ │
-└─────────────────────────────────┴───────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-              ┌──────────┐   ┌──────────┐   ┌──────────┐
-              │PostgreSQL│   │  MinIO   │   │  Gmail   │
-              │ (Cloud)  │   │ (Cloud)  │   │  SMTP    │
-              └──────────┘   └──────────┘   └──────────┘
-```
+![VinaAcademy Microservices Architecture](./docs/images/vinaacademy-microservices-architecture.png)
 
 ---
 
@@ -75,17 +48,17 @@ This guide provides instructions for deploying the VinaAcademy microservices pla
 
 ### Hardware Requirements
 
-| Node | Hostname | RAM | Role |
-|------|----------|-----|------|
-| Manager | vina-tools | 2GB+ | tools |
-| Worker | vina-microservices | 8GB+ | worker-service |
+| Node | Name | RAM | Role |
+|------|------|-----|------|
+| Droplet A | vina-tools | 4GB+ | Databases, Message Broker, Discovery |
+| Droplet B | vina-services | 8GB+ | Microservices, API Gateway, Frontend |
+| Droplet C | vina-ai | 4GB+ | AI Models, Vector Search |
 
 ### Software Requirements
 
-- Docker Engine 24.0+ on all nodes
-- Docker Swarm initialized
-- Network connectivity between nodes
-- Access to external services (PostgreSQL, MinIO)
+- Docker Engine & Docker Compose on all nodes
+- Network connectivity between nodes (Public IPs or VPC)
+- Access to external APIs (OpenAI, Gemini, Azure, Google, VNPay)
 
 ### Cloud Services Required
 
@@ -101,51 +74,23 @@ This guide provides instructions for deploying the VinaAcademy microservices pla
 
 ## Node Setup
 
-### Step 1: Initialize Docker Swarm (on manager node)
+### Step 1: Install Docker
+
+On all droplets (A, B, and C):
 
 ```bash
-# On vina-tools (manager node)
-docker swarm init --advertise-addr <MANAGER_IP>
+# Install Docker and Docker Compose
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
 ```
 
-### Step 2: Join Worker Node
+### Step 2: Clone Repository
+
+On all droplets:
 
 ```bash
-# Get join token from manager
-docker swarm join-token worker
-
-# On vina-microservices (worker node)
-docker swarm join --token <TOKEN> <MANAGER_IP>:2377
-```
-
-### Step 3: Verify Swarm Cluster
-
-```bash
-docker node ls
-```
-
-Expected output:
-```
-ID                            HOSTNAME             STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
-p8bsnsnkg8h0ka1feci1fvhhm     vina-microservices   Ready     Active                          29.1.1
-q980appr1y8lfbrqees4xkaq7 *   vina-tools           Ready     Active         Leader           29.1.1
-```
-
-### Step 4: Label Nodes for Placement
-
-```bash
-# Label the tools node
-docker node update --label-add role=tools vina-tools
-
-# Label the worker-service node
-docker node update --label-add role=worker-service vina-microservices
-```
-
-### Step 5: Verify Labels
-
-```bash
-docker node inspect vina-tools --format '{{ .Spec.Labels }}'
-docker node inspect vina-microservices --format '{{ .Spec.Labels }}'
+git clone https://github.com/VinaAcademy/ms-ci-cd.git
+cd ms-ci-cd
 ```
 
 ---
@@ -239,297 +184,139 @@ openssl rsa -in keys/private_key.pem -pubout -out keys/public_key.pem
 
 ## Deployment
 
-### Step 1: Copy Files to Manager Node
+This specific deployment guide uses **Docker Compose** on each independent droplet.
+
+### Step 1: Configure Environment (.env)
+
+1.  **On your local machine**, copy `.env.example` to `.env`.
+2.  Update the IPs and credentials in `.env`.
+    *   **Droplet A**: Set `DROPLET_A_IP` to its Public IP (for external access) or Private IP (if using VPC).
+    *   **Droplet B**: Set `DROPLET_B_PUBLIC_IP` to its Public IP.
+    *   **Droplet C**: Set `DROPLET_C_IP` to its IP.
+3.  **Copy this `.env` file to ALL droplets** (A, B, and C) into the `ms-ci-cd` directory.
+
+### Step 2: Deploy Droplet A (Tools)
+
+Droplet A runs the foundational infrastructure services (Redis, Kafka, Postgres, Eureka).
+
+1.  SSH into **Droplet A**.
+2.  Navigate to the tools directory:
+    ```bash
+    cd ms-ci-cd/tools
+    ```
+3.  Start the services:
+    ```bash
+    docker-compose --env-file ../.env up -d
+    ```
+
+### Step 3: Deploy Droplet C (AI)
+
+Droplet C runs the AI workload services.
+
+1.  SSH into **Droplet C**.
+2.  Navigate to the AI directory:
+    ```bash
+    cd ms-ci-cd/ai
+    ```
+3.  Start the services:
+    ```bash
+    docker-compose --env-file ../.env up -d
+    ```
+
+### Step 4: Deploy Droplet B (Services)
+
+Droplet B runs the main application microservices.
+
+1.  SSH into **Droplet B**.
+2.  Navigate to the services directory:
+    ```bash
+    cd ms-ci-cd/services
+    ```
+3.  Start the services:
+    ```bash
+    docker-compose --env-file ../.env up -d
+    ```
+
+### Step 5: Verify Deployment
+
+Check running containers on each droplet:
 
 ```bash
-# Copy project files to manager node
-scp -r . user@vina-tools:/path/to/vinaacademy/
-```
-
-### Step 2: Deploy Stack
-
-> **⚠️ IMPORTANT**: Docker Stack does NOT automatically load `.env` files like Docker Compose!
-> You must use one of the methods below.
-
-**Method 1: Using Deploy Script (Recommended)**
-
-```bash
-# SSH to manager node
-ssh user@vina-tools
-
-# Navigate to project directory
-cd /path/to/vinaacademy
-
-# Make script executable (Linux/Mac)
-chmod +x deploy.sh
-
-# Run deploy script
-./deploy.sh
-```
-
-For Windows PowerShell:
-```powershell
-# Run deploy script
-.\deploy.ps1 -Action deploy
-```
-
-**Method 2: Manual Export Variables (Linux/Mac)**
-
-```bash
-# Export variables from .env file
-export $(grep -v '^#' .env | grep -v '^$' | xargs)
-
-# Deploy the stack
-docker stack deploy -c docker-stack.yml vinaacademy
-```
-
-**Method 3: Using docker-compose config (Cross-platform)**
-
-```bash
-# Use docker-compose to substitute variables, then deploy
-docker-compose -f docker-stack.yml config | docker stack deploy -c - vinaacademy
-```
-
-**Method 4: Manual Export Variables (Windows PowerShell)**
-
-```powershell
-# Load environment variables
-Get-Content .env | ForEach-Object {
-    if ($_ -match '^([^#][^=]*)=(.*)$') {
-        [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
-    }
-}
-
-# Deploy the stack  
-docker stack deploy -c docker-stack.yml vinaacademy
-```
-
-### Step 3: Verify Deployment
-
-```bash
-# Check all services
-docker stack services vinaacademy
-
-# Check service placement
-docker stack ps vinaacademy
-
-# Watch services starting
-watch docker stack services vinaacademy
-```
-
-Expected output:
-```
-ID             NAME                             MODE         REPLICAS   IMAGE                                    PORTS
-abc123         vinaacademy_redis                replicated   1/1        redis:7-alpine                           *:6379->6379/tcp
-def456         vinaacademy_kafka                replicated   1/1        apache/kafka:3.9.1                       *:9092-9093->9092-9093/tcp
-ghi789         vinaacademy_eureka-server        replicated   1/1        lochuung/eureka-server:latest            *:8761->8761/tcp
-jkl012         vinaacademy_api-gateway          replicated   1/1        lochuung/api-gateway:latest              *:8080->8080/tcp
-mno345         vinaacademy_vinaacademy-platform replicated   1/1        lochuung/vinaacademy-platform:latest     *:8081->8080/tcp
-pqr678         vinaacademy_notification-service replicated   1/1        lochuung/notification-service:latest     *:8082->8080/tcp
-stu901         vinaacademy_chat-service         replicated   1/1        lochuung/chat-service:latest             *:8083->8080/tcp
-vwx234         vinaacademy_vinaacademy-frontend replicated   1/1        lochuung/vinaacademy-frontend:latest     *:3000->3000/tcp
+docker ps
 ```
 
 ---
 
 ## Management Commands
 
-### View Services
+### Start/Stop Services
+
+Run these commands inside the specific folder (`tools`, `services`, or `ai`) on the respective droplet.
 
 ```bash
-# List all services
-docker stack services vinaacademy
+# Start in background
+docker-compose --env-file ../.env up -d
 
-# List all tasks (containers)
-docker stack ps vinaacademy
+# Stop services
+docker-compose down
 
-# List only running tasks
-docker stack ps vinaacademy --filter "desired-state=running"
+# Restart a specific service
+docker-compose restart <service_name>
 ```
 
 ### View Logs
 
 ```bash
-# View logs for a specific service
-docker service logs vinaacademy_api-gateway
+# Follow logs for all services in the current compose file
+docker-compose logs -f
 
-# Follow logs in real-time
-docker service logs -f vinaacademy_vinaacademy-platform
-
-# View last 100 lines
-docker service logs --tail 100 vinaacademy_notification-service
-```
-
-### Scale Services
-
-```bash
-# Scale a service
-docker service scale vinaacademy_api-gateway=2
-
-# Scale multiple services
-docker service scale vinaacademy_api-gateway=2 vinaacademy_vinaacademy-platform=2
-```
-
-### Update Services
-
-```bash
-# Update a service image
-docker service update --image lochuung/api-gateway:v2.0 vinaacademy_api-gateway
-
-# Force update (re-deploy)
-docker service update --force vinaacademy_api-gateway
-```
-
-### Rolling Update (Full Stack)
-
-```bash
-# Update stack with new configuration
-docker stack deploy -c docker-stack.yml vinaacademy
-```
-
-### Remove Stack
-
-```bash
-# Remove entire stack
-docker stack rm vinaacademy
-
-# Verify removal
-docker stack ps vinaacademy
+# Follow logs for a specific service
+docker-compose logs -f <service_name>
 ```
 
 ### Cleanup
 
 ```bash
+# Remove containers and networks
+docker-compose down
+
 # Remove unused images
 docker image prune -a
-
-# Remove unused volumes (CAUTION!)
-docker volume prune
-
-# Remove everything unused
-docker system prune -a
 ```
 
 ---
 
 ## Troubleshooting
 
-### Check Service Health
-
-```bash
-# Check if services are healthy
-docker stack ps vinaacademy --format "table {{.Name}}\t{{.CurrentState}}\t{{.Error}}"
-
-# Inspect a specific service
-docker service inspect vinaacademy_api-gateway
-```
-
 ### Common Issues
 
-#### 1. Service Not Starting
+1.  **Connection Refused:**
+    *   Ensure the IP addresses in `.env` are correct.
+    *   Check if security groups/firewalls allow traffic on the required ports (e.g., 5432, 6379, 9092, 8761).
 
-```bash
-# Check service logs
-docker service logs vinaacademy_<service-name>
-
-# Check task errors
-docker stack ps vinaacademy --no-trunc
-```
-
-#### 2. Network Issues
-
-```bash
-# List networks
-docker network ls
-
-# Inspect overlay network
-docker network inspect vinaacademy_vinaacademy-network
-```
-
-#### 3. Config/Secret Issues
-
-```bash
-# List configs
-docker config ls
-
-# List secrets
-docker secret ls
-
-# Inspect config
-docker config inspect vinaacademy_api-gateway-config
-```
-
-#### 4. Resource Constraints
-
-```bash
-# Check node resources
-docker node inspect vina-tools --format '{{ .Description.Resources }}'
-docker node inspect vina-microservices --format '{{ .Description.Resources }}'
-```
-
-#### 5. Service Placement Issues
-
-```bash
-# Verify node labels
-docker node inspect vina-tools --format '{{ .Spec.Labels }}'
-docker node inspect vina-microservices --format '{{ .Spec.Labels }}'
-
-# Check placement constraints in service
-docker service inspect vinaacademy_api-gateway --format '{{ .Spec.TaskTemplate.Placement }}'
-```
+2.  **Service Not Healthy:**
+    *   Check logs: `docker-compose logs <service_name>`
+    *   Ensure dependent services are compliant (e.g., Platform needs Postgres/Redis).
 
 ### Health Check Endpoints
 
-| Service | Health Check URL |
-|---------|-----------------|
-| Eureka Server | http://<HOST>:8761/actuator/health |
-| API Gateway | http://<HOST>:8080/actuator/health |
-| Platform | http://<HOST>:8081/actuator/health |
-| Notification | http://<HOST>:8082/actuator/health |
-| Chat | http://<HOST>:8083/actuator/health |
-| Frontend | http://<HOST>:3000 |
-
----
-
-## Memory Allocation Summary
-
-### vina-tools (2GB RAM)
-
-| Service | Limit | Reserved |
-|---------|-------|----------|
-| Redis | 256M | 128M |
-| Kafka | 768M | 512M |
-| **Total** | **~1GB** | **~640M** |
-
-### vina-microservices (8GB RAM)
-
-| Service | Limit | Reserved |
-|---------|-------|----------|
-| Eureka Server | 512M | 256M |
-| API Gateway | 768M | 384M |
-| Platform | 2G | 1G |
-| Notification | 1G | 512M |
-| Chat | 1G | 512M |
-| Frontend | 512M | 256M |
-| **Total** | **~5.8GB** | **~2.9GB** |
+| Service | Health Check URL (Local) |
+|---------|--------------------------|
+| Eureka Server | http://localhost:8761/actuator/health |
+| API Gateway | http://localhost:8080/actuator/health |
+| Platform | http://localhost:8081/actuator/health |
+| AI Service | http://localhost:8000/health |
 
 ---
 
 ## Quick Reference
 
-```bash
-# Deploy
-docker stack deploy -c docker-stack.yml vinaacademy
+| Droplet | Folder | Command |
+|---------|--------|---------|
+| **Tools (A)** | `cd tools` | `docker-compose --env-file ../.env up -d` |
+| **Services (B)** | `cd services` | `docker-compose --env-file ../.env up -d` |
+| **AI (C)** | `cd ai` | `docker-compose --env-file ../.env up -d` |
 
-# Status
-docker stack services vinaacademy
-
-# Logs
-docker service logs -f vinaacademy_<service-name>
-
-# Remove
-docker stack rm vinaacademy
-```
 
 ---
 
